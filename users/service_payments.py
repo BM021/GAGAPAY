@@ -8,6 +8,7 @@ api = Api(bp)
 service_payment_model = api.parser()
 service_payment_model.add_argument('service_id', type=int, required=True)
 service_payment_model.add_argument('amount', type=float, required=True)
+service_payment_model.add_argument('from_card', type=int, required=True)
 
 
 @api.route('pay-service')

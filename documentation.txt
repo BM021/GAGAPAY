@@ -18,7 +18,7 @@ description: Перевод денег с одного счета на друг�
 
 
 method: [POST] ++
-endpoint: /pay-service/<service_id>/<amount>/<JWT>
+endpoint: /pay-service/<service_id>/<amount>/<from_card><JWT>
 response: {'status': 1, 'message': 'Success', 'token': string}
 description: Оплачивать услуги
 
