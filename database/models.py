@@ -1,14 +1,16 @@
+from flask_sqlalchemy import SQLAlchemy
+
 from datetime import datetime
 
-from main import db
+db = SQLAlchemy()
 
 
 # Модель пользователя
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True, unique=True, autoincrement=True)
-    user_phone_number = db.Column(db.String(11), unique=True, null=False)
-    username = db.Column(db.String(75), null=False)
+    user_phone_number = db.Column(db.String(11), unique=True, nullable=False)
+    username = db.Column(db.String(75), nullable=False)
     reg_date = db.Column(db.DateTime, default=datetime.now())
 
     # Регистрация пользовотеля
@@ -30,11 +32,11 @@ class User(db.Model):
 # Модель карт
 class Card(db.Model):
     __tablename__ = 'cards'
-    id = db.Column(db.Integer, primary_key=True, unique=True, autoincrement=True)
-    card_number = db.Column(db.Integer, unique=True, null=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), on_delete='SET NULL')
+    id = db.Column(db.Integer, unique=True, autoincrement=True)
+    card_number = db.Column(db.Integer, primary_key=True, unique=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
     card_amount = db.Column(db.Float)
-    exp_date = db.Column(db.Date, null=False)
+    exp_date = db.Column(db.Date, nullable=False)
     added_date = db.Column(db.DateTime, default=datetime.now())
 
     # Регистрация карты
@@ -43,18 +45,28 @@ class Card(db.Model):
         db.session.add(user_card)
         db.session.commit()
 
+    # Получение карты
+    def get_card_object(self, card_id):
+        current_card = Card.query.get_or_404(card_id)
+        return current_card
+
     # Удалить карту
-    def delete_card(self, card_number):
-        current_card = Card.query.get_or_404(card_number)
-        db.session.delete(current_card)
-        db.session.commit()
+    def delete_card(self, card_id):
+        current_card = Card.query.get_or_404(card_id)
+        if current_card:
+            db.session.delete(current_card)
+            db.session.commit()
+
+            return True
+
+        return False
 
 
 # Модель платежей
 class Payment(db.Model):
     __tablename__ = 'payments'
     id = db.Column(db.Integer, primary_key=True, unique=True, autoincrement=True)
-    card_id = db.Column(db.Integer, db.ForeignKey('cards.id', on_delete='SET 0'), null=False)
+    card_id = db.Column(db.Integer, db.ForeignKey('cards.id', ondelete='SET NULL'), nullable=False)
     amount = db.Column(db.Float)
     pay_date = db.Column(db.DateTime, default=datetime.now())
 
@@ -62,12 +74,57 @@ class Payment(db.Model):
 
     # Создать платеж
     def create_payment(self, card_id, amount):
-        payment = Payment(card_id=card_id, amount=amount)
-        db.session.add(payment)
-        db.session.commit()
+        card = Card().get_card_object(card_id=card_id)
+        if card.amount >= amount:
+            new_pay = Payment(card_id=card_id, card=card, amount=amount)
+            db.session.add(new_pay)
+            db.session.commit()
+
+            return True
+
+        return False
+
 
 # Модель бизнеса
+class Business(db.Model):
+    __tablename__ = 'businesses'
+    id = db.Column(db.Integer, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), primary_key=True)
+    service_name = db.Column(db.String(60))
+    business_card = db.Column(db.Integer, db.ForeignKey('cards.card_number'))
+    service_type = db.Column(db.String, db.ForeignKey('services.service_type_name'))
+    opened = db.Column(db.DateTime, default=datetime.now())
 
-# Модель сервиса
+    card_date = db.relationship(Card)
+
+    # Регистрация бизнесса
+    def register_business(self, user_id, service_name, service_type, which_card):
+        checker = Card.query.get_or_404(which_card)
+
+        if checker and checker.user_id == user_id:
+            new_business = Business(user_id=user_id, service_name=service_name,
+                                    business_card=which_card, card_date=checker, service_type=service_type)
+
+            db.session.add(new_business)
+            db.session.commit()
+
+            return True
+
+        return False
+
 
 # Модель типа сервиса
+class ServiceType(db.Model):
+    __tablename__ = 'services'
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    service_category = db.Column(db.String)
+    service_type_name = db.Column(db.String, unique=True)
+    opened = db.Column(db.DateTime, default=datetime.now())
+
+    # Регистрация типа сервиса
+    def register_service(self, service_name, service_type_name):
+        new_service_type = ServiceType(service_name=service_name, service_type_name=service_type_name)
+        db.session.add(new_service_type)
+        db.session.commit()
+
+        return True
