@@ -9,6 +9,7 @@ api = Api(bp)
 card_model = api.parser()
 card_model.add_argument('user_id', type=int, required=True)
 card_model.add_argument('card_number', type=int, required=True)
+card_model.add_argument('card_name', type=str, required=True)
 card_model.add_argument('exp_date', type=str, required=True)
 card_model.add_argument('amount', type=float, required=True)
 
@@ -23,16 +24,17 @@ class AddCard(Resource):
         response = card_model.parse_args()
         user_id = response.get('user_id')
         card_number = response.get('card_number')
+        card_name = response.get('card_name')
         exp_date = response.get('exp_date')
         amount = response.get('amount')
 
         try:
-            Card().register_card(card_number, user_id, amount, exp_date)
+            Card().register_card(card_number, card_name, user_id, amount, exp_date)
 
             return {'status': 1, 'message': 'Карта успешно добавлена'}
 
         except Exception as e:
-            return {'status': 0, 'message': 'Ошибка в данных'}
+            return {'status': 0, 'message': str(e)}
 
 
 @api.route('/delete-card')

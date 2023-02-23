@@ -1,6 +1,8 @@
 from flask import Blueprint
 from flask_restx import Api, Resource
 
+from database.models import Payment
+
 bp = Blueprint('monitoring', __name__)
 api = Api(bp)
 
@@ -10,7 +12,13 @@ monitoring_model.add_argument('card_number_or_all', type=str, required=True)
 
 
 @api.route('/expenses')
-class Monitoring(Resource):
+class GetUserMonitoring(Resource):
     @api.expect(monitoring_model)
     def get(self):
-        pass
+        card_number = monitoring_model.parse_args()
+
+        result = Payment().monitor_pays(card_number.get('card_number'))
+        if result:
+            return {'status': 1, 'message': result}
+
+        return {'status': 0, 'message': 'Нету ничего'}

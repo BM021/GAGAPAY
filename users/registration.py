@@ -24,12 +24,12 @@ class RegisterUser(Resource):
         phone_number = response.get('phone_number')
 
         try:
-            User().register_user(phone_number, username)
+            user_id = User().register_user(phone_number, username)
 
-            return {'status': 1, 'message': 'Пользователь успешно добавлен'}
+            return {'status': 1, 'user_id': user_id}
 
         except Exception as e:
-            return {'status': 0, 'message': 'Ошибка в данных'}
+            return {'status': 0, 'message': str(e)}
 
     @api.expect(update_user_phone_number)
     def put(self):
