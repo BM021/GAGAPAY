@@ -3,8 +3,11 @@ from flask_restx import Api, Resource
 
 from database.models import Card
 
-bp = Blueprint('card', __name__)
-api = Api(bp)
+# bp = Blueprint('card', __name__)
+# api = Api(bp)
+
+
+from users import api
 
 card_model = api.parser()
 card_model.add_argument('user_id', type=int, required=True)

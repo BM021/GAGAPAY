@@ -1,8 +1,12 @@
 from flask import Blueprint
 from flask_restx import Api, Resource
 
-bp = Blueprint('income_business', __name__)
-api = Api(bp)
+from database.models import Payment, Business
+
+# bp = Blueprint('income_business', __name__)
+# api = Api(bp)
+
+from business import api
 
 income_model = api.parser()
 income_model.add_argument('user_id', type=int, required=True)
@@ -12,4 +16,10 @@ income_model.add_argument('user_id', type=int, required=True)
 class GetBusinessIncome(Resource):
     @api.expect(income_model)
     def get(self):
-        pass
+        args = income_model.parse_args()
+        user_id = args.get('user_id')
+
+        business_to_get = Business.query.get(user_id)
+        incomes = Payment().monitor_pays(business_to_get.business_card)
+
+        return {'status': 1, 'message': incomes}

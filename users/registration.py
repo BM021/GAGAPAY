@@ -3,8 +3,10 @@ from flask_restx import Api, Resource
 
 from database.models import User
 
-bp = Blueprint('registration', __name__)
-api = Api(bp)
+# bp = Blueprint('registration', __name__)
+# api = Api(bp)
+
+from users import api
 
 registration_model = api.parser()
 registration_model.add_argument('username', type=str, required=True)

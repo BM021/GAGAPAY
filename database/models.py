@@ -1,5 +1,4 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
 
 from datetime import datetime
 
@@ -51,7 +50,9 @@ class Card(db.Model):
 
         else:
             exp_date = datetime.strptime(exp_date, '%Y-%m-%d')
-            user_card = Card(card_number=card_number, card_name=card_name, card_amount=amount, user_id=user_id, exp_date=exp_date)
+            user_card = Card(card_number=card_number, card_name=card_name, card_amount=amount,
+                             user_id=user_id, exp_date=exp_date)
+
             db.session.add(user_card)
             db.session.commit()
 
@@ -76,7 +77,7 @@ class Card(db.Model):
 class Payment(db.Model):
     __tablename__ = 'payments'
     id = db.Column(db.Integer, primary_key=True, unique=True, autoincrement=True)
-    card_id = db.Column(db.Integer, db.ForeignKey('cards.id', ondelete='SET NULL'), nullable=False)
+    card_number = db.Column(db.Integer, db.ForeignKey('cards.card_number', ondelete='SET NULL'), nullable=False)
     amount = db.Column(db.Float)
     payment_type = db.Column(db.String, db.ForeignKey('services.service_type_name'))
     pay_date = db.Column(db.DateTime, default=datetime.now())
@@ -87,8 +88,8 @@ class Payment(db.Model):
     # Создать платеж
     def create_payment(self, card_number, amount, service_type_name):
         card = Card().get_card_object(card_id=card_number)
-        if card.amount >= amount:
-            new_pay = Payment(card_id=card.id, card=card, amount=amount, payment_type=service_type_name)
+        if card.card_amount >= amount:
+            new_pay = Payment(card_number=card.card_number, card=card, amount=amount, payment_type=service_type_name)
             db.session.add(new_pay)
             db.session.commit()
 
@@ -99,15 +100,20 @@ class Payment(db.Model):
     # Мониторнинг платежей
     def monitor_pays(self, card_number):
         card = Card().get_card_object(card_id=card_number)
-        card_payments = Payment.query.filter_by(card.id).all()
+        card_payments = Payment.query.filter_by(card_number=card.card_number).all()
 
         if card_payments:
             result = [{'pay_id': i.id,
                        'pay_type': i.payment_type,
-                       'amount': i.amout,
+                       'amount': i.amount,
                        'date': i.str(i.pay_date)} for i in card_payments]
 
             return result
+
+    # def send_invoice(self, service_id, service_name, amount):
+    #     service = Payment(payment_type=service_name, amount=amount)
+    #     db.session.add(service)
+    #     db.session.commit()
 
 
 # Модель бизнеса
@@ -148,7 +154,7 @@ class ServiceType(db.Model):
 
     # Регистрация типа сервиса
     def register_service(self, service_name, service_type_name):
-        new_service_type = ServiceType(service_name=service_name, service_type_name=service_type_name)
+        new_service_type = ServiceType(service_category=service_name, service_type_name=service_type_name)
         db.session.add(new_service_type)
         db.session.commit()
 
@@ -158,9 +164,9 @@ class ServiceType(db.Model):
 # P2P
 class TransfersP2P(db.Model):
     __tablename__ = 'p2p'
-    id = db.Column(db.Integer, autoincrement=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, nullable=False)
-    user_from_card = db.Column(db.Integer, db.ForeignKey('cards.card_number', ondelete='SET NULL'), primary_key=True)
+    user_from_card = db.Column(db.Integer, db.ForeignKey('cards.card_number', ondelete='SET NULL'))
     user_to_card = db.Column(db.Integer)
     amount = db.Column(db.Float)
     p2p_date = db.Column(db.DateTime, default=datetime.now())

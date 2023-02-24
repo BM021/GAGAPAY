@@ -3,9 +3,10 @@ from flask_restx import Api, Resource
 
 from database.models import Payment
 
-bp = Blueprint('monitoring', __name__)
-api = Api(bp)
+# bp = Blueprint('monitoring', __name__)
+# api = Api(bp)
 
+from users import api
 
 monitoring_model = api.parser()
 monitoring_model.add_argument('card_number_or_all', type=str, required=True)
